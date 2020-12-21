@@ -22,17 +22,18 @@ def read_csv ( filename ):
     return pop,dist
 
 pop,dist=read_csv ( "villes.csv" )
-#print("pop",pop)
-#print("dist",dist)
+
+
+
 
 alpha=0.2
-J=[3,6,9]
+J=[0,1,2]
+
+
+
 
 pop[:]=list(map(int,pop))
-
-
 gamma=((1+alpha)/len(J))*sum(pop)
-print(gamma)
 
 nbcont=len(pop)+len(J)
 nbvar=len(pop)*len(J)+len(J)
@@ -74,7 +75,6 @@ for i in J:
         fo.append(get_dist(i,j))
 for i in range(len(J)):
     fo.append(0)
-#print(fo)
 
 
 lignes = range(nbcont)
@@ -84,17 +84,12 @@ colonnes = range(nbvar)
 
 # Matrice des contraintes
 a = mat
-print(a)
-print("")
 
 # Second membre
 b = sm
-print(b)
-print("")
 
 # Coefficients de la fonction objectif
 c = fo
-print(c)
 
 m = Model("mogplex")     
         
@@ -134,9 +129,7 @@ for i in range(len(pop)*len(J)):
         temp=[]
 np.set_printoptions(edgeitems=15)
 matres=np.asmatrix(res)
-print(matres)
 
-print(res)
 di=0
 for i in range(len(res)):
     for j in range(len(res[0])):
@@ -149,18 +142,6 @@ print(matres.T)
 print("")
 print("distance moyenne")
 print(di)
-        
-print("")   
-'''
-print('Solution optimale:')
-for j in colonnes:
-    print('x%d'%(j+1), '=', x[j].x)
-print("")
-print('Valeur de la fonction objectif :', m.objVal)'''
-
-
-
-
 
 
 

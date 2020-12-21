@@ -34,6 +34,7 @@ pop,dist=read_csv ( "villes.csv" )
 
 
 
+
 alpha=0.2
 k=5
 
@@ -44,7 +45,7 @@ pop[:]=list(map(int,pop))
 gamma=((1+alpha)/k)*sum(pop)
 
 nbcont=len(pop)+len(pop)
-nbvar=len(pop)*len(pop)
+nbvar=len(pop)*len(pop)+1
 
 #contrainte somme(xij vi) <= gamma
 mat=[]
@@ -80,6 +81,15 @@ for i in range(len(pop)):
         mat.append(l)
         
         
+#contrainte somme_j(dij xij) <=z
+for i in range(len(pop)):
+    l=[0]*nbvar
+    for j in range(len(pop)):
+        l[i+(j*len(pop))]=get_dist(i,j)
+    l[-1]=-1
+    mat.append(l)
+        
+        
     
 
 sm=[]
@@ -93,7 +103,8 @@ for i in range(len(pop)):
     for j in range(len(pop)):
         sm.append(0)
 
-    
+for i in range(len(pop)):
+    sm.append(0)
 
 
 def get_dist(i,j):
@@ -102,20 +113,21 @@ def get_dist(i,j):
     except IndexError :
         return dist[j][i]
 
-fo=[]
-for i in range(len(pop)):
-    for j in range(len(pop)):
-        fo.append(get_dist(i,j))
-#print(fo)
+fo=[0]*nbvar
+fo[-1]=1
+
 
 lignes = range(len(mat))
 colonnes = range(len(mat[0]))
+
+
 
 # Matrice des contraintes
 a = mat
 
 # Second membre
 b = sm
+
 
 # Coefficients de la fonction objectif
 c = fo
@@ -128,6 +140,7 @@ u=0
 for i in range(len(pop)**2):
     u+=1
     x.append(m.addVar(vtype=GRB.INTEGER, lb=0, ub=1, name="x%d" % (i+1)))
+x.append(m.addVar(vtype=GRB.INTEGER, lb=0, name="x%d" % (i+1)))
 # maj du modele pour integrer les nouvelles variables
 m.update()
 
@@ -144,14 +157,17 @@ m.setObjective(obj,GRB.MINIMIZE)
 # Definition des contraintes
 
 
-for i in lignes:
+for i in range(len(mat)-(len(pop))):
     if b[i]==1 or b[i]==k:
          m.addConstr(quicksum(a[i][j]*x[j] for j in colonnes) == b[i], "Contrainte%d" % i)
     elif b[i]==0:
          m.addConstr(quicksum(a[i][j]*x[j] for j in colonnes) >= b[i], "Contrainte%d" % i)
     else :
          m.addConstr(quicksum(a[i][j]*x[j] for j in colonnes) <= b[i], "Contrainte%d" % i)
-        
+
+for i in range(len(mat)-(len(pop)),len(mat)):
+    m.addConstr(quicksum(a[i][j]*x[j] for j in colonnes) <= b[i], "Contrainte%d" % i)
+    
 # Resolution
 m.optimize()
 res=[]
@@ -165,15 +181,10 @@ np.set_printoptions(edgeitems=15)
 matres=np.asmatrix(res)
 
 
-di=0
-for i in range(len(res)):
-    for j in range(len(res[0])):
-        di+=get_dist(j,i)*res[i][j]*pop[j]
-di/=sum(pop)
-
 print("")
 print("Matrice des xij")
 print(matres.T)
 print("")
-print("distance moyenne")
-print(di)
+print("distance maximale")
+print(m.objVal)
+
